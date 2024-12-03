@@ -1,0 +1,60 @@
+name: my_app
+description: "A new Flutter project."
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+
+
+
+  flutter:
+    sdk: flutter
+  image_picker: ^0.8.4+4
+
+  permission_handler: ^10.2.0
+
+  # Cupertino Icons for iOS styled icons
+  cupertino_icons: ^1.0.8
+
+  # Google Fonts for custom fonts
+  google_fonts: ^4.0.4
+
+  # State management (you can choose others like Riverpod or Bloc if you prefer)
+  provider: ^6.0.5
+
+  shared_preferences: ^2.1.1
+
+  # HTTP requests for API integration
+  http: ^1.2.2
+
+  # To handle SVG files
+  flutter_svg: ^2.0.4
+
+  # Cached network images for better image handling
+  cached_network_image: ^3.2.3
+
+  # For responsive layout designs across devices
+  flutter_screenutil: ^5.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Ensure to include the necessary assets here (images, icons, etc.)
+  assets:
+    - assets/
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
+
+
+
+
