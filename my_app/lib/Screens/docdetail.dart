@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/chooseplan.dart';
+import 'package:my_app/Screens/medicalreport.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_app/Screens/topdoctors.dart';
 
 class DoctorDetailScreen extends StatefulWidget {
-  final String email;
+  final String email; // Doctor's email
 
   const DoctorDetailScreen({super.key, required this.email});
 
@@ -15,13 +18,25 @@ class DoctorDetailScreen extends StatefulWidget {
 class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   Map<String, dynamic>? doctorDetails;
   bool isLoading = true;
+  String? userEmail; // User's email retrieved from SharedPreferences
 
   @override
   void initState() {
     super.initState();
+    _loadUserEmail(); // Load the user's email from SharedPreferences
+  }
+
+  /// Loads the user's email from SharedPreferences
+  Future<void> _loadUserEmail() async {
     fetchDoctorDetails();
   }
 
+  Future<String?> getUserEmail() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userEmail'); // Return the email
+  }
+
+  /// Fetches doctor details from the backend
   Future<void> fetchDoctorDetails() async {
     try {
       final response = await http.get(
@@ -47,6 +62,51 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     }
   }
 
+  Future<void> checkUserPlan() async {
+    final email = await getUserEmail(); // Retrieve the email
+
+    if (email == null || email.isEmpty) {
+      print('Email not found in SharedPreferences');
+      return;
+    }
+
+    final url = Uri.parse('http://10.0.2.2:3000/api/users/user/check-plan');
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+    final body = jsonEncode({
+      'email': email, // Send the email to the backend
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Navigate to MedicalReportScreen on success
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const Medicalreport(), // Replace with your actual screen
+          ),
+        );
+      } else if (response.statusCode == 403 || response.statusCode == 404) {
+        // Navigate to ChoosePlanScreen on error
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const ChoosePlanScreen(), // Replace with your actual screen
+          ),
+        );
+      } else {
+        print('Error: ${response.statusCode} ${response.body}');
+      }
+    } catch (error) {
+      print('Error making API request: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,7 +119,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const DoctorListScreen(), // Pass email
+                builder: (context) => const DoctorListScreen(),
               ),
             );
           },
@@ -170,10 +230,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         // Send Medical Report Button
                         Center(
                           child: ElevatedButton(
-                            onPressed: () {
-                              // Add your action for sending the medical report
-                              print("Send Medical Report button pressed");
-                            },
+                            onPressed: checkUserPlan,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               padding: const EdgeInsets.symmetric(
@@ -199,7 +256,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 16), // Remove the image icon
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

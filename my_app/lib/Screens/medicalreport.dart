@@ -68,7 +68,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
         child: Column(
           children: [
             Image.asset(
-              'Assets/Doc.png', // You can replace this with the image you've uploaded
+              'assets/images/Doc.png', // You can replace this with the image you've uploaded
               height: 200,
             ),
             const SizedBox(height: 16),
@@ -133,7 +133,8 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
               ),
               child: const Text("Upload"),
             ),

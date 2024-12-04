@@ -125,8 +125,9 @@ class DoctorCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                DoctorDetailScreen(email: email), // Pass email
+            builder: (context) => DoctorDetailScreen(
+              email: email,
+            ), // Pass email
           ),
         );
       },

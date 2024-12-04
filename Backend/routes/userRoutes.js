@@ -38,7 +38,56 @@ router.get('/user/image', (req, res) => {
       }
     });
   });
-    
+
+router.post('/user/check-plan', (req, res) => {
+    const { email } = req.body;
+
+    console.log('Request body:', req.body);
+  
+    // Validate request body
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+  
+    // Query to check active user plan and associated report upload limits
+    const query = `
+      SELECT up.*, p.report_upload_limit, p.name AS plan_name
+      FROM userplan AS up
+      JOIN plan AS p ON up.plan_id = p.id
+      WHERE up.user_email = ? AND up.status = 'active' AND up.end_date >= CURDATE()
+      LIMIT 1;
+    `;
+  
+    // Execute the query
+    db.query(query, [email], (err, results) => {
+      if (err) {
+        console.error('Error querying database:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+  
+      // Check if a valid plan exists
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'No active plan found' });
+      }
+  
+      const userPlan = results[0];
+      const remainingReports = userPlan.report_upload_limit - userPlan.reports_uploaded;
+  
+      // Determine eligibility based on remaining upload limits
+      if (remainingReports > 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'User is eligible to upload a medical report',
+          remainingReports,
+        });
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: 'Report upload limit reached',
+        });
+      }
+    });
+  });  
 
 
 module.exports = router;
