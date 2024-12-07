@@ -1,7 +1,39 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/plandetail.dart';
 
-class ChoosePlanScreen extends StatelessWidget {
+class ChoosePlanScreen extends StatefulWidget {
   const ChoosePlanScreen({super.key});
+
+  @override
+  State<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
+}
+
+class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
+  late Future<List<Map<String, dynamic>>> plansFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    plansFuture = fetchPlans(); // Initialize the future to fetch plans
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPlans() async {
+    const url = 'http://10.0.2.2:3000/api/plan/plan'; // Backend API URL
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        return data.map((e) => e as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to fetch plans: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching plans: $e');
+      return [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +76,43 @@ class ChoosePlanScreen extends StatelessWidget {
             _buildFeatureItem('Easy and convenient'),
             const SizedBox(height: 40),
 
-            // Plan options
-            _buildPlanOption(context, 'One Month', 'Rs 2000/month'),
-            const SizedBox(height: 16),
-            _buildPlanOption(context, 'Three Months', 'Rs 6000/3 month'),
-            const SizedBox(height: 16),
-            _buildPlanOption(context, 'Annual', 'Rs 18000/year'),
+            // Dynamically fetch and display plans
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: plansFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text('No plans available'),
+                    );
+                  } else {
+                    final plans = snapshot.data!;
+                    return ListView.separated(
+                      itemCount: plans.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final plan = plans[index];
+                        return _buildPlanOption(
+                          context,
+                          plan['name'] as String,
+                          plan['price'] as String,
+                          plan['frequency'] as String,
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -74,43 +137,64 @@ class ChoosePlanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlanOption(BuildContext context, String title, String price) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade600), // Darker border color
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2), // Shadow position
+  Widget _buildPlanOption(
+      BuildContext context, String name, String price, String frequency) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to the PlanDetailsScreen with the selected plan name
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PlanDetailsScreen(planName: name),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade600),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2), // Shadow position
             ),
-          ),
-          Text(
-            price,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8), // Add spacing between elements
+            Text(
+              'Rs $price', // Displaying price with "Rs" prefix
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 4), // Add spacing between elements
+            Text(
+              frequency,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

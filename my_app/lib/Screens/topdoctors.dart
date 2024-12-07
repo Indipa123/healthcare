@@ -39,7 +39,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
   Future<void> fetchDoctors() async {
     try {
       final response = await http
-          .get(Uri.parse('http://10.0.2.2:3000/api/auth/doctor/details'));
+          .get(Uri.parse('http://192.168.8.195:3000/api/auth/doctor/details'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {

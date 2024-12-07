@@ -41,7 +41,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/api/auth/doctor/details/${widget.email}'),
+            'http://192.168.8.195:3000/api/auth/doctor/details/${widget.email}'),
       );
       if (response.statusCode == 200) {
         setState(() {
@@ -70,7 +70,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:3000/api/users/user/check-plan');
+    final url = Uri.parse('http://192.168.8.195:3000/api/users/user/check-plan');
     final headers = {
       'Content-Type': 'application/json',
     };
@@ -86,8 +86,9 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                const Medicalreport(), // Replace with your actual screen
+            builder: (context) => SubmitReportPage(
+              doctorEmail: widget.email,
+            ), // Replace with your actual screen
           ),
         );
       } else if (response.statusCode == 403 || response.statusCode == 404) {

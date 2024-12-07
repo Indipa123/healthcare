@@ -5,6 +5,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/auth');
+const planRoutes = require('./routes/planRoutes');
 const db = require('./config/db');  // To initiate MySQL connection
 
 // Increase the payload limit for JSON data
@@ -15,6 +16,7 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.json());
 
 // Routes
+app.use('/api/plan',planRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes );
 
