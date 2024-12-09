@@ -193,6 +193,36 @@ router.post('/submit-report', async (req, res) => {
   }
 });
 
+router.get('/reports/latest', (req, res) => {
+  const { user_email } = req.query;
+
+  // Check if user_email is provided
+  if (!user_email) {
+    return res.status(400).json({ error: 'User email is required' });
+  }
+
+  // Query to fetch the latest 5 reports for the given user
+  const query = `
+    SELECT id, report_type, status, created_at
+    FROM medical_reports
+    WHERE user_email = ?
+    ORDER BY created_at DESC
+    LIMIT 5
+  `;
+
+  // Execute the query
+  db.query(query, [user_email], (err, results) => {
+    if (err) {
+      console.error('Error fetching reports:', err);
+      return res.status(500).json({ error: 'Failed to fetch reports' });
+    }
+
+    // Respond with the fetched results
+    res.status(200).json(results);
+  });
+});
+
+
 
 module.exports = router;
 

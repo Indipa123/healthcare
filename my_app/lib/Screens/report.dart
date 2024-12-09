@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -9,37 +12,53 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  int _selectedIndex =
-      1; // Set default selected index to 1 for the Reports page
+  int _selectedIndex = 1; // Default selected index
+  List<dynamic> _reports = []; // Store fetched reports
+  bool _isLoading = true; // Show loading state
+  String? userEmail; // Store user email
 
-  // Bottom navigation bar tap handler
-  void _onItemTapped(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _loadUserEmail(); // Load email and fetch reports
+  }
+
+  // Load user email from SharedPreferences
+  Future<void> _loadUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedIndex = index;
+      userEmail = prefs.getString('userEmail'); // Key for email
     });
-    // Implement navigation logic based on index if necessary
-    switch (_selectedIndex) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-        break;
-      case 1:
-        // Stay on Reports screen (current screen)
-        break;
-      case 2:
-        /*Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const CartScreen()),
-        );*/
-        break;
-      case 3:
-        /*Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );*/
-        break;
+    if (userEmail != null) {
+      _fetchReports();
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Fetch reports from the backend
+  Future<void> _fetchReports() async {
+    final uri = Uri.parse('http://10.0.2.2:3000/api/users/reports/latest')
+        .replace(queryParameters: {'user_email': userEmail!});
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _reports = json.decode(response.body);
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load reports');
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error fetching reports: $error');
     }
   }
 
@@ -83,7 +102,7 @@ class _ReportPageState extends State<ReportPage> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Latest report Feedback",
+              "Latest Report Feedback",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -91,16 +110,19 @@ class _ReportPageState extends State<ReportPage> {
               ),
             ),
             const SizedBox(height: 10),
-            _buildReportCard(
-              title: "Blood report",
-              date: "Oct 10, 2023",
-              status: "View Report Feedback",
-            ),
-            _buildReportCard(
-              title: "Cholesterol report",
-              date: "Jul 5, 2023",
-              status: "Pending...",
-            ),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _reports.isNotEmpty
+                    ? Column(
+                        children: _reports.map((report) {
+                          return _buildReportCard(
+                            title: report['report_type'] ?? 'Unknown Report',
+                            date: report['created_at'] ?? 'Unknown Date',
+                            status: report['status'] ?? 'Unknown Status',
+                          );
+                        }).toList(),
+                      )
+                    : const Text('No reports available.'),
           ],
         ),
       ),
@@ -121,50 +143,30 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  // Helper widget to build each info card (Heart rate, Blood Group, Weight)
-  Widget _buildInfoCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required Color iconColor,
-  }) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.only(
-          top: 16,
-          left: 12,
-          right: 12,
-          bottom: 12), // Adjusted padding for better spacing
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Navigation logic
+    switch (_selectedIndex) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+        break;
+      case 1:
+        break; // Stay on Reports screen
+      case 2:
+        // Navigate to Cart screen
+        break;
+      case 3:
+        // Navigate to Profile screen
+        break;
+    }
   }
 
-  // Helper widget to build each report card with feedback
+  // Helper widget to build each report card
   Widget _buildReportCard({
     required String title,
     required String date,
@@ -207,6 +209,48 @@ class _ReportPageState extends State<ReportPage> {
             const Icon(Icons.more_vert, color: Colors.grey),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required Color iconColor,
+  }) {
+    return Container(
+      width: 100,
+      padding: const EdgeInsets.only(
+          top: 16,
+          left: 12,
+          right: 12,
+          bottom: 12), // Adjusted padding for better spacing
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: Colors.black),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
       ),
     );
   }

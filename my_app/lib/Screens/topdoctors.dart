@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/docdetail.dart';
+import 'package:my_app/Screens/home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
   Future<void> fetchDoctors() async {
     try {
       final response = await http
-          .get(Uri.parse('http://192.168.8.195:3000/api/auth/doctor/details'));
+          .get(Uri.parse('http://10.0.2.2:3000/api/auth/doctor/details'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {
@@ -68,7 +69,14 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          },
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
