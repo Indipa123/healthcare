@@ -96,7 +96,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
 
       // Send POST request
       final uri =
-          Uri.parse('http://10.0.2.2:3000/api/users/submit-report');
+          Uri.parse('http://192.168.8.195:3000/api/users/submit-report');
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},

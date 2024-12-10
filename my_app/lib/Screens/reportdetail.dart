@@ -9,7 +9,7 @@ import 'package:flutter_pdfview/flutter_pdfview.dart'; // Add this import for PD
 class ReportDetailsScreen extends StatefulWidget {
   final String? reportId;
 
-  const ReportDetailsScreen({Key? key, this.reportId}) : super(key: key);
+  const ReportDetailsScreen({super.key, this.reportId});
 
   @override
   _ReportDetailsScreenState createState() => _ReportDetailsScreenState();
@@ -31,7 +31,8 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
 
       // Fetch report details from backend
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/auth/report/${widget.reportId}'),
+        Uri.parse(
+            'http://10.0.2.2:3000/api/auth/report/${widget.reportId}'),
       );
 
       if (response.statusCode == 200) {
@@ -117,16 +118,38 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
 
   Future<void> _downloadReport(String base64FileData, String fileType) async {
     try {
-      // Convert Base64 to file
+      // Convert Base64 to file bytes
       final bytes = base64Decode(base64FileData);
-      final downloadsDir = await getApplicationDocumentsDirectory();
-      final filePath = "${downloadsDir.path}/report.$fileType";
 
+      // Get the external storage directory (Android-specific)
+      final directory = await getExternalStorageDirectory();
+
+      if (directory == null) {
+        throw Exception("Unable to access external storage directory.");
+      }
+
+      // Construct the path to the Downloads folder
+      final downloadsPath =
+          "${directory.parent.parent.parent.parent.path}/Download";
+
+      // Generate a unique file name
+      String fileName = "report";
+      int counter = 1;
+      String filePath;
+
+      do {
+        filePath =
+            "$downloadsPath/$fileName${counter > 1 ? counter : ''}.$fileType";
+        counter++;
+      } while (await File(filePath).exists());
+
+      // Write the file
       final file = File(filePath);
       await file.writeAsBytes(bytes);
 
+      // Notify the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Report downloaded to $filePath")),
+        SnackBar(content: Text("Report downloaded as $filePath")),
       );
     } catch (e) {
       print("Error downloading report: $e");
@@ -220,11 +243,32 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                             ElevatedButton(
                               onPressed: () {
                                 if (reportDetails?['fileData'] != null) {
+                                  // Extract the file type or use a default value
                                   final fileType =
-                                      reportDetails!['fileType'] ?? 'pdf';
+                                      reportDetails!['fileType'] ?? 'png';
+
+                                  // Ensure file type is supported
+                                  if (!['pdf', 'jpg', 'jpeg', 'png']
+                                      .contains(fileType.toLowerCase())) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text("Unsupported file type.")),
+                                    );
+                                    return;
+                                  }
+
+                                  // Call the download function
                                   _downloadReport(
                                     reportDetails!['fileData'],
-                                    fileType,
+                                    fileType.toLowerCase(),
+                                  );
+                                } else {
+                                  // Notify user if file data is missing
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            "No file data available to download.")),
                                   );
                                 }
                               },
@@ -323,7 +367,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
 class PDFViewScreen extends StatelessWidget {
   final String filePath;
 
-  const PDFViewScreen({Key? key, required this.filePath}) : super(key: key);
+  const PDFViewScreen({super.key, required this.filePath});
 
   @override
   Widget build(BuildContext context) {

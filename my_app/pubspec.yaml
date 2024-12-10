@@ -54,8 +54,6 @@ dependencies:
   flutter_pdfview: ^1.0.0+6  # Make sure you have the correct version
 
 
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
