@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Welcome, Mr. ${userName ?? 'User'}",
+                          "Welcome,${userName ?? 'User'}",
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

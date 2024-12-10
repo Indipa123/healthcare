@@ -108,34 +108,67 @@ router.post('/payment', (req, res) => {
 
     const currentDate = moment().format('YYYY-MM-DD');
     const startDate = currentDate;
-    const endDate = moment().add(plan.frequency === '/month' ? 1 : plan.frequency === '/3 month' ? 3 : 12, 'months').format('YYYY-MM-DD');
-    const reportUploadLimit = plan.report_upload_limit;
+    const endDate = moment()
+      .add(plan.frequency === '/month' ? 1 : plan.frequency === '/3 month' ? 3 : 12, 'months')
+      .format('YYYY-MM-DD');
 
-    // Insert purchase record
-    const purchaseQuery = `
-      INSERT INTO userplan (user_email, plan_name, price_paid, purchase_date, start_date, end_date, status, reports_uploaded)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    // Check if the user already has an active plan
+    const checkPlanQuery = `
+      SELECT * FROM userplan 
+      WHERE user_email = ? AND status = 'active' AND end_date >= CURDATE()
+      LIMIT 1;
     `;
-    const purchaseValues = [
-      userEmail,
-      plan_name,
-      price_paid,
-      currentDate,
-      startDate,
-      endDate,
-      'active', // Status is 'active' immediately after payment
-      0, // Initially, no reports are uploaded
-    ];
 
-    db.query(purchaseQuery, purchaseValues, (err, result) => {
+    db.query(checkPlanQuery, [userEmail], (err, existingPlanResult) => {
       if (err) {
-        return res.status(500).json({ error: 'Error processing payment' });
+        return res.status(500).json({ error: 'Error checking existing subscription' });
       }
 
-      return res.status(200).json({ message: 'Payment successful', subscriptionId: result.insertId });
+      if (existingPlanResult.length > 0) {
+        // If an active plan exists, update it
+        const updatePlanQuery = `
+          UPDATE userplan 
+          SET plan_name = ?, price_paid = ?, purchase_date = ?, start_date = ?, end_date = ?, reports_uploaded = 0 
+          WHERE user_email = ? AND status = 'active' AND end_date >= CURDATE();
+        `;
+        const updateValues = [plan_name, price_paid, currentDate, startDate, endDate, userEmail];
+
+        db.query(updatePlanQuery, updateValues, (err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Error updating subscription' });
+          }
+
+          return res.status(200).json({ message: 'Subscription updated successfully' });
+        });
+      } else {
+        // If no active plan exists, create a new one
+        const insertPlanQuery = `
+          INSERT INTO userplan (user_email, plan_name, price_paid, purchase_date, start_date, end_date, status, reports_uploaded)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const insertValues = [
+          userEmail,
+          plan_name,
+          price_paid,
+          currentDate,
+          startDate,
+          endDate,
+          'active', // Status is 'active' immediately after payment
+          0, // Initially, no reports are uploaded
+        ];
+
+        db.query(insertPlanQuery, insertValues, (err, result) => {
+          if (err) {
+            return res.status(500).json({ error: 'Error processing payment' });
+          }
+
+          return res.status(200).json({ message: 'Payment successful', subscriptionId: result.insertId });
+        });
+      }
     });
   });
 });
+
 
 router.post('/submit-report', async (req, res) => {
   const { user_email, doctor_email, report_type, file_data } = req.body;
@@ -203,7 +236,7 @@ router.get('/reports/latest', (req, res) => {
 
   // Query to fetch the latest 5 reports for the given user
   const query = `
-    SELECT id, report_type, status, created_at
+    SELECT id, report_type, status,DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
     FROM medical_reports
     WHERE user_email = ?
     ORDER BY created_at DESC

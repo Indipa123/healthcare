@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/chooseplan.dart';
 import 'package:my_app/Screens/dprofile.dart';
-import 'package:my_app/Screens/report.dart';
+import 'package:my_app/Screens/dreport.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
-  const DoctorHomeScreen({super.key});
+  const DoctorHomeScreen({super.key, String? email});
 
   @override
   _DoctorHomeScreenState createState() => _DoctorHomeScreenState();
@@ -70,7 +70,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ReportPage()),
+          MaterialPageRoute(builder: (context) => DReportsPage()),
         );
         break;
       case 2:
@@ -92,22 +92,6 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEAF4FF),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: const Text(
-          "Doctor Dashboard",
-          style: TextStyle(color: Colors.black, fontSize: 20),
-        ),
-        actions: const [
-          Icon(Icons.signal_cellular_alt, color: Colors.black),
-          SizedBox(width: 8),
-          Icon(Icons.wifi, color: Colors.black),
-          SizedBox(width: 8),
-          Icon(Icons.battery_full, color: Colors.black),
-          SizedBox(width: 16),
-        ],
-      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
