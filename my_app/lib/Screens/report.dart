@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/home.dart';
+import 'package:my_app/Screens/ureportdetail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportPage extends StatefulWidget {
@@ -62,6 +63,15 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  void _onReportTapped(String reportId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UReportDetailsScreen(reportId: reportId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,10 +125,14 @@ class _ReportPageState extends State<ReportPage> {
                 : _reports.isNotEmpty
                     ? Column(
                         children: _reports.map((report) {
-                          return _buildReportCard(
-                            title: report['report_type'] ?? 'Unknown Report',
-                            date: report['created_at'] ?? 'Unknown Date',
-                            status: report['status'] ?? 'Unknown Status',
+                          return GestureDetector(
+                            onTap: () => _onReportTapped(
+                                report['id'].toString()), // <-- Here
+                            child: _buildReportCard(
+                              title: report['report_type'] ?? 'Unknown Report',
+                              date: report['created_at'] ?? 'Unknown Date',
+                              status: report['status'] ?? 'Unknown Status',
+                            ),
                           );
                         }).toList(),
                       )

@@ -70,7 +70,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DReportsPage()),
+          MaterialPageRoute(builder: (context) => const DReportsPage()),
         );
         break;
       case 2:

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
@@ -18,6 +20,11 @@ class ReportDetailsScreen extends StatefulWidget {
 class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
   Map<String, dynamic>? reportDetails;
   bool isLoading = true;
+  TextEditingController feedbackController = TextEditingController();
+  TextEditingController prescriptionController = TextEditingController();
+  String? prescriptionImageBase64;
+  String? doctorEmail;
+  String? userEmail;
 
   @override
   void initState() {
@@ -31,14 +38,16 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
 
       // Fetch report details from backend
       final response = await http.get(
-        Uri.parse(
-            'http://10.0.2.2:3000/api/auth/report/${widget.reportId}'),
+        Uri.parse('http://10.0.2.2:3000/api/auth/report/${widget.reportId}'),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> fetchedDetails = json.decode(response.body);
 
         setState(() {
+          doctorEmail = fetchedDetails[
+              'doctor_email']; // Assuming these fields exist in the response
+          userEmail = fetchedDetails['user_email'];
           reportDetails = fetchedDetails;
           isLoading = false;
         });
@@ -50,6 +59,70 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         isLoading = false;
       });
       print("Error fetching report details: $e");
+    }
+  }
+
+  Future<void> _submitFeedback() async {
+    final reportId =
+        widget.reportId; // Assuming reportId is passed from previous screen
+    final feedbackText = feedbackController.text;
+    final prescriptionText = prescriptionController.text;
+
+    if (doctorEmail == null || userEmail == null) {
+      // Ensure that doctorEmail and userEmail are available before submitting
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Report details not loaded yet. Please try again later.'),
+        ),
+      );
+      return;
+    }
+
+    // Check if prescription image is valid
+    if (prescriptionImageBase64 == null || prescriptionImageBase64!.isEmpty) {
+      print("Prescription image is missing or invalid");
+    }
+
+    if (feedbackText.isEmpty) {
+      print("Feedback text is empty");
+    }
+
+    // Log the data being sent to backend for debugging
+    print('Report ID: $reportId');
+    print('Doctor Email: $doctorEmail');
+    print('User Email: $userEmail');
+    print('Prescription Image Base64: $prescriptionImageBase64');
+    print('Feedback Text: $feedbackText');
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/auth/report/feedback'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'report_id': reportId,
+          'doctor_email': doctorEmail,
+          'user_email': userEmail,
+          'prescription_details':
+              prescriptionText, // Replace with actual details
+          'prescription_image': prescriptionImageBase64, // Base64 encoded image
+          'feedback': feedbackText,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Feedback submitted successfully!')),
+        );
+      } else {
+        throw Exception('Failed to submit feedback');
+      }
+    } catch (e) {
+      print("Error submitting feedback: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit feedback')),
+      );
     }
   }
 
@@ -159,6 +232,55 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     }
   }
 
+  Future<void> _takePhotoOfPrescription() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+
+    if (photo != null) {
+      File imageFile = File(photo.path);
+      List<int> imageBytes = await imageFile.readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+
+      setState(() {
+        prescriptionImageBase64 = base64Image;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Photo captured and ready to submit')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No photo captured')),
+      );
+    }
+  }
+
+  Future<void> _importPrescription() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+    );
+
+    if (result != null) {
+      String filePath = result.files.single.path ?? '';
+      File imageFile = File(filePath);
+      List<int> imageBytes = await imageFile.readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+
+      setState(() {
+        prescriptionImageBase64 = base64Image;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Prescription imported: $filePath')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No file selected.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,87 +325,87 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                         ),
                         const SizedBox(height: 16),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment
+                              .spaceBetween, // Ensures even spacing
                           children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                if (reportDetails?['fileData'] != null) {
-                                  final fileType = reportDetails!['fileType'] ??
-                                      'png'; // Assuming backend sends file type
-                                  if (fileType == 'pdf') {
-                                    _viewReport(
-                                      reportDetails!['fileData'],
-                                      'pdf',
-                                    );
-                                  } else if (['png', 'jpg', 'jpeg']
-                                      .contains(fileType)) {
-                                    _viewImage(
-                                      reportDetails!['fileData'],
-                                      fileType,
-                                    );
+                            // View Report Button
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (reportDetails?['fileData'] != null) {
+                                    final fileType =
+                                        reportDetails!['fileType'] ??
+                                            'png'; // Default file type
+                                    if (fileType == 'pdf') {
+                                      _viewReport(
+                                          reportDetails!['fileData'], 'pdf');
+                                    } else if (['png', 'jpg', 'jpeg']
+                                        .contains(fileType)) {
+                                      _viewImage(
+                                          reportDetails!['fileData'], fileType);
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Unsupported file format.')),
+                                      );
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        8), // Rounded corners
+                                  ),
+                                ),
+                                child: const Text('View Report'),
+                              ),
+                            ),
+                            const SizedBox(width: 12), // Space between buttons
+                            // Download Report Button
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (reportDetails?['fileData'] != null) {
+                                    final fileType =
+                                        reportDetails!['fileType'] ?? 'png';
+                                    if (!['pdf', 'jpg', 'jpeg', 'png']
+                                        .contains(fileType.toLowerCase())) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text("Unsupported file type.")),
+                                      );
+                                      return;
+                                    }
+                                    _downloadReport(reportDetails!['fileData'],
+                                        fileType.toLowerCase());
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                          content:
-                                              Text('Unsupported file format.')),
+                                          content: Text(
+                                              "No file data available to download.")),
                                     );
                                   }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      8), // Slight rounding
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        8), // Rounded corners
+                                  ),
                                 ),
+                                child: const Text('Download Report'),
                               ),
-                              child: const Text('View Report'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (reportDetails?['fileData'] != null) {
-                                  // Extract the file type or use a default value
-                                  final fileType =
-                                      reportDetails!['fileType'] ?? 'png';
-
-                                  // Ensure file type is supported
-                                  if (!['pdf', 'jpg', 'jpeg', 'png']
-                                      .contains(fileType.toLowerCase())) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text("Unsupported file type.")),
-                                    );
-                                    return;
-                                  }
-
-                                  // Call the download function
-                                  _downloadReport(
-                                    reportDetails!['fileData'],
-                                    fileType.toLowerCase(),
-                                  );
-                                } else {
-                                  // Notify user if file data is missing
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            "No file data available to download.")),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      8), // Slight rounding
-                                ),
-                              ),
-                              child: const Text('Download Report'),
                             ),
                           ],
                         ),
+
                         const SizedBox(height: 24),
                         const Text(
                           'Prescription',
@@ -294,28 +416,71 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
-                          decoration: InputDecoration(
+                          controller: prescriptionController,
+                          decoration: const InputDecoration(
                             hintText: 'Enter drugs for the prescription',
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.all(
+                                  Radius.circular(8)), // Uniform rounding
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            // Handle Upload Prescription Image action
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade300,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(8), // Slight rounding
+// Row for horizontal button alignment
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Import Prescription Button
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    _importPrescription, // Call the Import Prescription function
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade300,
+                                  foregroundColor: Colors.black,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(8)), // Uniform rounding
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14), // Adjust vertical padding
+                                ),
+                                icon: const Icon(Icons.upload_file),
+                                label: const Text(
+                                  'Import',
+                                  style: TextStyle(
+                                      fontSize: 14), // Adjust font size
+                                ),
+                              ),
                             ),
-                          ),
-                          child: const Text('Upload prescription image'),
+                            const SizedBox(
+                                width: 12), // Spacing between the two buttons
+                            // Take Photo of Prescription Button
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    _takePhotoOfPrescription, // Call the Take Photo of Prescription function
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade300,
+                                  foregroundColor: Colors.black,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(8)), // Uniform rounding
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14), // Adjust vertical padding
+                                ),
+                                icon: const Icon(Icons.camera_alt),
+                                label: const Text(
+                                  'Take Photo',
+                                  style: TextStyle(
+                                      fontSize: 14), // Adjust font size
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+
                         const SizedBox(height: 24),
                         const Text(
                           'Feedback',
@@ -326,6 +491,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
+                          controller: feedbackController,
                           maxLines: 4,
                           decoration: InputDecoration(
                             hintText: 'Enter your feedback',
@@ -335,11 +501,11 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Center(
+                        SizedBox(
+                          width: double
+                              .infinity, // Ensures the button spans the entire width
                           child: ElevatedButton(
-                            onPressed: () {
-                              // Handle Submit Feedback action
-                            },
+                            onPressed: _submitFeedback,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
@@ -348,8 +514,8 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
                                     BorderRadius.circular(8), // Slight rounding
                               ),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 100,
-                                vertical: 12,
+                                vertical:
+                                    12, // Remove horizontal padding for full width
                               ),
                             ),
                             child: const Text('Submit Feedback'),

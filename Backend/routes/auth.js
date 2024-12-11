@@ -122,7 +122,7 @@ router.get('/report/:id', (req, res) => {
   const reportId = req.params.id;
 
   const query = `
-    SELECT id, report_type, file_data, DATE_FORMAT(created_at, '%Y-%m-%d') as created_at 
+    SELECT id, report_type, user_email, doctor_email, file_data, DATE_FORMAT(created_at, '%Y-%m-%d') as created_at 
     FROM medical_reports 
     WHERE id = ?;
   `;
@@ -148,9 +148,9 @@ router.get('/reports', (req, res) => {
   const { doctor_email } = req.query;
 
   const query = `
-      SELECT id, report_type, DATE_FORMAT(created_at, '%Y-%m-%d') as created_at 
-      FROM medical_reports 
-      WHERE doctor_email = ?
+      SELECT id, report_type, user_email, doctor_email, DATE_FORMAT(created_at, '%Y-%m-%d') as created_at 
+      FROM medical_reports  
+      WHERE doctor_email = ? AND status != 'View Report Feedback'
   `;
 
   db.query(query, [doctor_email], (err, results) => {
@@ -160,11 +160,95 @@ router.get('/reports', (req, res) => {
           id: report.id,
           reportType: report.report_type,
           createdAt: report.created_at,
+          userEmail: report.user_email, // Include user_email if you want it in the response
+          doctorEmail: report.doctor_email // Include doctor_email if you want it in the response
       }));
 
       res.status(200).json(reports);
   });
 });
+
+
+router.post('/report/feedback', (req, res) => {
+  const {
+    report_id,
+    doctor_email,
+    user_email,
+    prescription_details,
+    prescription_image,  // Assuming base64 encoded image
+    feedback
+  } = req.body;
+
+  // Convert base64 image back to binary data
+  let imageBuffer = null;
+  if (prescription_image) {
+    imageBuffer = Buffer.from(prescription_image, 'base64');
+  }
+
+  // SQL query to insert feedback
+  const queryFeedback = `
+    INSERT INTO feedback (
+      report_id, doctor_email, user_email, prescription_details, prescription_image, feedback
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `;
+
+  // SQL query to update report status
+  const queryUpdateReportStatus = `
+    UPDATE medical_reports 
+    SET status = 'View Report Feedback'
+    WHERE id = ?
+  `;
+
+  // Start a transaction to ensure both operations (insert and update) succeed
+  db.beginTransaction((err) => {
+    if (err) {
+      console.error("Transaction error:", err);
+      return res.status(500).json({ error: 'Failed to begin transaction' });
+    }
+
+    // Insert the feedback
+    db.query(queryFeedback, [
+      report_id,
+      doctor_email,
+      user_email,
+      prescription_details,
+      imageBuffer,
+      feedback
+    ], (err, results) => {
+      if (err) {
+        return db.rollback(() => {
+          console.error("Error inserting feedback:", err);
+          res.status(500).json({ error: err.message });
+        });
+      }
+
+      // Update the report status
+      db.query(queryUpdateReportStatus, [report_id], (err, results) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error("Error updating report status:", err);
+            res.status(500).json({ error: err.message });
+          });
+        }
+
+        // Commit the transaction
+        db.commit((err) => {
+          if (err) {
+            return db.rollback(() => {
+              console.error("Error committing transaction:", err);
+              res.status(500).json({ error: 'Failed to commit transaction' });
+            });
+          }
+
+          // Successfully inserted feedback and updated report status
+          res.status(201).json({ message: 'Feedback submitted successfully', feedbackId: results.insertId });
+        });
+      });
+    });
+  });
+});
+
+
 
 
 module.exports = router;
