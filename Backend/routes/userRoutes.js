@@ -257,30 +257,52 @@ router.get('/reports/latest', (req, res) => {
 
 // Fetch prescription details by prescription ID
 router.get('/prescriptions/:report_id', (req, res) => {
-
   const reportId = req.params.report_id;
 
-  const query = `
-  SELECT prescription_details, prescription_image, feedback
-  FROM feedback
-  WHERE report_id = ?
-`;
+  // First, check the status of the report in the medical_reports table
+  const statusQuery = `
+    SELECT status
+    FROM medical_reports
+    WHERE id = ?
+  `;
 
-db.query(query, [reportId], (err, results) => {
-  if (err) return res.status(500).json({ error: err.message });
+  db.query(statusQuery, [reportId], (err, statusResults) => {
+    if (err) return res.status(500).json({ error: err.message });
 
-  if (results.length === 0) {
-    return res.status(404).json({ error: 'Prescription not found' });
-  }
+    if (statusResults.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
 
-  const prescription = results[0];
-  if (prescription.prescription_image) {
-    prescription.prescriptionImage = Buffer.from(prescription.prescription_image).toString('base64');
-  }
+    const status = statusResults[0].status;
 
-  res.status(200).json(prescription);
+    if (status !== 'View Report Feedback') {
+      return res.status(200).json({ message: 'Pending Result' });
+    }
+
+    // If the status is 'View Report Feedback', fetch the prescription details
+    const query = `
+      SELECT prescription_details, prescription_image, feedback
+      FROM feedback
+      WHERE report_id = ?
+    `;
+
+    db.query(query, [reportId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Prescription not found' });
+      }
+
+      const prescription = results[0];
+      if (prescription.prescription_image) {
+        prescription.prescriptionImage = Buffer.from(prescription.prescription_image).toString('base64');
+      }
+
+      res.status(200).json(prescription);
+    });
+  });
 });
-});
+
 
 function calculateAge(birthday) {
   const birthDate = new Date(birthday);
@@ -326,6 +348,36 @@ router.get('/patient-info', (req, res) => {
     });
 
     res.json(patients);
+  });
+});
+
+// Route to get additional patient details
+router.get('/patientdetails', (req, res) => {
+  const email = req.query.email;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const query = `
+    SELECT gender, weight, height, blood_type
+    FROM personal_info
+    WHERE user_email = ?
+  `;
+
+  db.query(query, [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const patientDetails = results[0];
+    patientDetails.email = email;
+
+    res.json(patientDetails);
   });
 });
 

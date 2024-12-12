@@ -6,19 +6,19 @@ import 'package:http/http.dart' as http; // For API requests
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart'; // Update this with the actual path to your PDF viewer screen
 
-class UReportDetailsScreen extends StatefulWidget {
+class DReportDetailScreen extends StatefulWidget {
   final String reportId; // Pass a unique identifier for the report
 
-  const UReportDetailsScreen({
+  const DReportDetailScreen({
     super.key,
     required this.reportId,
   });
 
   @override
-  _UReportDetailsScreenState createState() => _UReportDetailsScreenState();
+  _DReportDetailScreenState createState() => _DReportDetailScreenState();
 }
 
-class _UReportDetailsScreenState extends State<UReportDetailsScreen> {
+class _DReportDetailScreenState extends State<DReportDetailScreen> {
   Map<String, dynamic>? reportDetails;
   Map<String, dynamic>? prescriptionDetails;
   bool isLoading = true;
@@ -100,42 +100,6 @@ class _UReportDetailsScreenState extends State<UReportDetailsScreen> {
       print("Error viewing file: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to open the file.")),
-      );
-    }
-  }
-
-  Future<void> _downloadFile(
-      String base64FileData, String fileType, String fileName) async {
-    try {
-      final bytes = base64Decode(base64FileData);
-
-      final directory = await getExternalStorageDirectory();
-      if (directory == null) {
-        throw Exception("Unable to access external storage directory.");
-      }
-
-      final downloadsPath =
-          "${directory.parent.parent.parent.parent.path}/Download";
-
-      String filePath;
-      int counter = 1;
-
-      do {
-        filePath =
-            "$downloadsPath/$fileName${counter > 1 ? '_$counter' : ''}.$fileType";
-        counter++;
-      } while (await File(filePath).exists());
-
-      final file = File(filePath);
-      await file.writeAsBytes(bytes);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("File downloaded to $filePath")),
-      );
-    } catch (e) {
-      print("Error downloading file: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to download the file.")),
       );
     }
   }
@@ -255,39 +219,6 @@ class _UReportDetailsScreenState extends State<UReportDetailsScreen> {
                             },
                             child: const Text(
                               "View Prescription",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            onPressed: () {
-                              if (prescriptionDetails?["prescriptionImage"] !=
-                                  null) {
-                                final fileType =
-                                    prescriptionDetails!["fileType"] ?? 'png';
-                                _downloadFile(
-                                    prescriptionDetails!["prescriptionImage"],
-                                    fileType,
-                                    "prescription");
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          "No prescription data available to download.")),
-                                );
-                              }
-                            },
-                            child: const Text(
-                              "Download Prescription",
                               style: TextStyle(color: Colors.white),
                             ),
                           ),

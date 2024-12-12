@@ -248,6 +248,48 @@ router.post('/report/feedback', (req, res) => {
   });
 });
 
+router.get('/reportsd', (req, res) => {
+  const { doctor_email, user_email } = req.query;
+
+  // Validate required query parameters
+  if (!doctor_email || !user_email) {
+    return res.status(400).json({ error: 'Doctor email and user email are required' });
+  }
+
+  console.log('doctor_email:', doctor_email);
+  console.log('user_email:', user_email);
+
+  // SQL query to fetch reports
+  const query = `
+    SELECT id, report_type, user_email, doctor_email, 
+           DATE_FORMAT(created_at, '%Y-%m-%d') as created_at 
+    FROM medical_reports  
+    WHERE doctor_email = ? AND user_email = ?
+  `;
+
+  // Execute the query with parameters
+  db.query(query, [doctor_email, user_email], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    console.log('Query results:', results);
+
+    // Ensure only the filtered records are returned
+    const reports = results.map(report => ({
+      id: report.id,
+      reportType: report.report_type,
+      createdAt: report.created_at,
+      userEmail: report.user_email,
+      doctorEmail: report.doctor_email,
+    }));
+
+    // Respond with the filtered reports
+    res.status(200).json(reports);
+  });
+});
+
 
 
 

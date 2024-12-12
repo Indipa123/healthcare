@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/doctorhome.dart';
+import 'package:my_app/Screens/patientdetail.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Patient {
+  final String email;
   final String name;
   final int age;
   final String work;
   final String? imageBase64;
 
   Patient({
+    required this.email,
     required this.name,
     required this.age,
     required this.work,
@@ -19,6 +22,7 @@ class Patient {
 
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(
+      email: json['email'],
       name: json['name'],
       age: json['age'],
       work: json['work'],
@@ -52,6 +56,8 @@ Future<List<Patient>> fetchPatientInfo() async {
 }
 
 class FrequentPatientsPage extends StatefulWidget {
+  const FrequentPatientsPage({super.key});
+
   @override
   _FrequentPatientsPageState createState() => _FrequentPatientsPageState();
 }
@@ -98,11 +104,11 @@ class _FrequentPatientsPageState extends State<FrequentPatientsPage> {
                 future: futurePatients,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No patients found'));
+                    return const Center(child: Text('No patients found'));
                   } else {
                     final patients = snapshot.data!;
                     return ListView.builder(
@@ -117,7 +123,8 @@ class _FrequentPatientsPageState extends State<FrequentPatientsPage> {
                               backgroundImage: patient.imageBase64 != null
                                   ? MemoryImage(
                                       base64Decode(patient.imageBase64!))
-                                  : AssetImage('assets/default_avatar.png')
+                                  : const AssetImage(
+                                          'assets/default_avatar.png')
                                       as ImageProvider,
                             ),
                             title: Text(
@@ -129,17 +136,29 @@ class _FrequentPatientsPageState extends State<FrequentPatientsPage> {
                             ),
                             subtitle: Text(
                               'Age: ${patient.age}, Work: ${patient.work}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
-                                color: const Color.fromARGB(255, 0, 0, 0),
+                                color: Color.fromARGB(255, 0, 0, 0),
                               ),
                             ),
-                            trailing: Icon(
+                            trailing: const Icon(
                               Icons.arrow_forward_ios,
-                              color: const Color.fromARGB(255, 0, 0, 0),
+                              color: Color.fromARGB(255, 0, 0, 0),
                               size: 20,
                             ),
                             onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PatientDetailScreen(
+                                    email: patient.email,
+                                    name: patient.name,
+                                    work: patient.work,
+                                    age: patient.age,
+                                    imageBase64: patient.imageBase64,
+                                  ),
+                                ),
+                              );
                               // Handle patient selection
                             },
                           ),
