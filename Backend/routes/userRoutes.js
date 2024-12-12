@@ -255,6 +255,79 @@ router.get('/reports/latest', (req, res) => {
   });
 });
 
+// Fetch prescription details by prescription ID
+router.get('/prescriptions/:report_id', (req, res) => {
+
+  const reportId = req.params.report_id;
+
+  const query = `
+  SELECT prescription_details, prescription_image, feedback
+  FROM feedback
+  WHERE report_id = ?
+`;
+
+db.query(query, [reportId], (err, results) => {
+  if (err) return res.status(500).json({ error: err.message });
+
+  if (results.length === 0) {
+    return res.status(404).json({ error: 'Prescription not found' });
+  }
+
+  const prescription = results[0];
+  if (prescription.prescription_image) {
+    prescription.prescriptionImage = Buffer.from(prescription.prescription_image).toString('base64');
+  }
+
+  res.status(200).json(prescription);
+});
+});
+
+function calculateAge(birthday) {
+  const birthDate = new Date(birthday);
+  const ageDifMs = Date.now() - birthDate.getTime();
+  const ageDate = new Date(ageDifMs);
+  return Math.abs(ageDate.getUTCFullYear() - 1970);
+}
+
+// Route to get patient information
+router.get('/patient-info', (req, res) => {
+  const doctorEmail = req.query.doctorEmail; // Get doctorEmail from query parameters
+
+  if (!doctorEmail) {
+    return res.status(400).json({ error: 'Doctor email is required' });
+  }
+
+  const query = `
+    SELECT DISTINCT u.email, u.name, u.image, pi.birthday, pi.work
+    FROM medical_reports mr
+    JOIN users u ON mr.user_email = u.email
+    JOIN personal_info pi ON mr.user_email = pi.user_email
+    WHERE mr.doctor_email = ?
+  `;
+
+  db.query(query, [doctorEmail], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    const patients = results.map((row) => {
+      const age = calculateAge(row.birthday);
+      let imageBase64 = null;
+      if (row.image) {
+        imageBase64 = Buffer.from(row.image).toString('base64');
+      }
+      return {
+        email: row.email,
+        name: row.name,
+        image: imageBase64,
+        age: age,
+        work: row.work
+      };
+    });
+
+    res.json(patients);
+  });
+});
 
 
 module.exports = router;

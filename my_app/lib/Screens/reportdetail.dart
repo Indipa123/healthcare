@@ -113,7 +113,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Feedback submitted successfully!')),
+          const SnackBar(content: Text('Feedback submitted successfully!')),
         );
       } else {
         throw Exception('Failed to submit feedback');
@@ -121,7 +121,7 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
     } catch (e) {
       print("Error submitting feedback: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit feedback')),
+        const SnackBar(content: Text('Failed to submit feedback')),
       );
     }
   }
@@ -246,11 +246,11 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Photo captured and ready to submit')),
+        const SnackBar(content: Text('Photo captured and ready to submit')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No photo captured')),
+        const SnackBar(content: Text('No photo captured')),
       );
     }
   }

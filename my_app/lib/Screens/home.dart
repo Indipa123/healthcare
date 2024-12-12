@@ -120,8 +120,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const Text(
+                          "Welcome",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
                         Text(
-                          "Welcome,${userName ?? 'User'}",
+                          userName ?? 'User',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -131,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Text(
                           "How is it going today?",
                           style: TextStyle(
-                            color: Colors.grey,
+                            color: Color.fromARGB(255, 96, 96, 96),
                             fontSize: 16,
                           ),
                         ),

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/chooseplan.dart';
 import 'package:my_app/Screens/dprofile.dart';
 import 'package:my_app/Screens/dreport.dart';
+import 'package:my_app/Screens/frequentpatients.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
@@ -174,7 +175,11 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                     icon: Icons.person_search,
                     label: "Patients",
                     onTap: () {
-                      // Add functionality to navigate to patients list
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => FrequentPatientsPage()),
+                      );
                     },
                   ),
                   _buildActionButton(
