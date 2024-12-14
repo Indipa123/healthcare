@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/contact.dart';
 import 'dart:convert';
 
 import 'package:my_app/Screens/patienthistory.dart';
@@ -118,8 +119,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                             children: [
                               _DetailItem(
                                   label: 'Age', value: '${widget.age} Years'),
-                              _DetailItem(
-                                  label: 'Work', value: '${widget.work}'),
+                              _DetailItem(label: 'Work', value: widget.work),
                               _DetailItem(
                                   label: 'Gender',
                                   value: patientDetails['gender']),
@@ -170,7 +170,15 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                         label: 'Contact Patient',
                         icon: Icons.contact_phone,
                         onPressed: () {
-                          // Handle Contact Patient action
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ContactPatientScreen(
+                                email: widget.email,
+                                name: widget.name, // Pass the correct email
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ],

@@ -7,6 +7,7 @@ import 'package:my_app/Screens/chooseplan.dart';
 import 'package:my_app/Screens/home.dart';
 import 'package:my_app/Screens/report.dart';
 import 'package:my_app/Screens/signin.dart';
+import 'package:my_app/Screens/viewmessage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -100,6 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final List<MenuItem> menuItems = [
     MenuItem(icon: Icons.favorite_outline, title: 'My Saved'),
+    MenuItem(icon: Icons.message, title: 'Messages'),
     MenuItem(icon: Icons.history, title: 'Feedback History'),
     MenuItem(icon: Icons.payment, title: 'Payment Method'),
     MenuItem(icon: Icons.question_answer, title: 'FAQs'),
@@ -274,6 +276,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       if (menuItems[index].title == 'Logout') {
                         _logOut();
+                      } else if (menuItems[index].title == 'Messages') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ViewMessagesScreen(),
+                          ),
+                        );
                       } else {
                         // Handle other menu options
                       }

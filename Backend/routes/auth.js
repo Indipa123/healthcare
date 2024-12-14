@@ -248,6 +248,7 @@ router.post('/report/feedback', (req, res) => {
   });
 });
 
+
 router.get('/reportsd', (req, res) => {
   const { doctor_email, user_email } = req.query;
 
@@ -289,6 +290,28 @@ router.get('/reportsd', (req, res) => {
     res.status(200).json(reports);
   });
 });
+
+router.post('/sendmessage', (req, res) => {
+  const { user_email, doctor_email, message } = req.body;
+
+  if (!user_email || !doctor_email || !message) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const query = `
+    INSERT INTO messages (user_email, doctor_email, message)
+    VALUES (?, ?, ?)
+  `;
+
+  db.query(query, [user_email, doctor_email, message], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    res.status(200).json({ message: 'Message sent successfully' });
+  });
+});
+
+
+
 
 
 

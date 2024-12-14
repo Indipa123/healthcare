@@ -178,7 +178,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => FrequentPatientsPage()),
+                            builder: (context) => const FrequentPatientsPage()),
                       );
                     },
                   ),

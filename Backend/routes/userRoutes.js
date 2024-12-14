@@ -360,7 +360,7 @@ router.get('/patientdetails', (req, res) => {
   }
 
   const query = `
-    SELECT gender, weight, height, blood_type
+    SELECT gender, weight, height, blood_type 
     FROM personal_info
     WHERE user_email = ?
   `;
@@ -378,6 +378,59 @@ router.get('/patientdetails', (req, res) => {
     patientDetails.email = email;
 
     res.json(patientDetails);
+  });
+});
+
+router.get('/contactdetails', (req, res) => {
+  const email = req.query.email;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const query = `
+    SELECT pi.Contact, u.name
+    FROM personal_info pi
+    JOIN users u ON pi.user_email = u.email
+    WHERE pi.user_email = ?
+  `;
+
+  db.query(query, [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const contactdetails = results[0];
+    contactdetails.email = email;
+
+    res.json(contactdetails);
+  });
+});
+
+// Route to get messages
+router.get('/messages', (req, res) => {
+  const { user_email } = req.query;
+
+  if (!user_email) {
+    return res.status(400).json({ error: 'User email is required' });
+  }
+
+  const query = `
+    SELECT m.doctor_email, m.message, DATE_FORMAT(m.created_at, '%Y-%m-%d %H:%i:%s') as created_at, d.name as doctor_name
+    FROM messages m
+    JOIN doctors d ON m.doctor_email = d.email
+    WHERE m.user_email = ?
+    ORDER BY m.created_at DESC
+  `;
+
+  db.query(query, [user_email], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    res.status(200).json(results);
   });
 });
 
