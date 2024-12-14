@@ -434,6 +434,64 @@ router.get('/messages', (req, res) => {
   });
 });
 
+// Route to fetch user information
+router.get('/info', (req, res) => {
+  const { email } = req.query;
+
+  const query = `
+    SELECT u.name, u.email, DATE_FORMAT(p.birthday, '%Y-%m-%d') as birthday, p.contact, p.address, p.blood_type, p.gender, p.weight, p.work, p.height
+    FROM users u
+    LEFT JOIN personal_info p ON u.email = p.user_email
+    WHERE u.email = ?
+  `;
+
+  db.query(query, [email], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    if (results.length > 0) {
+      const result = results[0];
+      const addressParts = result.address ? result.address.split(', ') : ['', ''];
+      res.status(200).json({
+        ...result,
+        street: addressParts[0],
+        locality: addressParts[1]
+      });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  });
+});
+
+
+// Route to update user information
+router.post('/update', (req, res) => {
+  const { email, name, birthday, contact,address,blood_type, gender, weight, work, height } = req.body;
+
+  const userQuery = `
+    UPDATE users SET name = ? WHERE email = ?
+  `;
+
+  const updatePersonalInfoQuery = `
+    UPDATE personal_info
+    SET birthday = ?, contact = ?, address = ?, blood_type = ?, gender = ?, weight = ?, work = ?, height = ?
+    WHERE user_email = ?
+  `;
+
+  
+
+  db.query(userQuery, [name, email], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    db.query(updatePersonalInfoQuery, [birthday, contact, address, blood_type, gender, weight, work, height, email], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      res.status(200).json({ message: 'Information updated successfully' });
+    });
+  });
+});
+
+
+
 
 module.exports = router;
 

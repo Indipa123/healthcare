@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/contact.dart';
 import 'dart:convert';
-
 import 'package:my_app/Screens/patienthistory.dart';
 
 class PatientDetailScreen extends StatefulWidget {

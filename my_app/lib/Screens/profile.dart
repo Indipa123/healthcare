@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:my_app/Screens/chooseplan.dart';
 import 'package:my_app/Screens/home.dart';
+import 'package:my_app/Screens/personalinfo.dart';
 import 'package:my_app/Screens/report.dart';
 import 'package:my_app/Screens/signin.dart';
 import 'package:my_app/Screens/viewmessage.dart';
@@ -79,7 +80,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfileImage() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:3000/api/users/user/image?email=$userEmail'),
+      Uri.parse(
+          'http://192.168.8.195:3000/api/users/user/image?email=$userEmail'),
     );
 
     if (response.statusCode == 200) {
@@ -100,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ];
 
   final List<MenuItem> menuItems = [
+    MenuItem(icon: Icons.person, title: 'Personal Information'),
     MenuItem(icon: Icons.favorite_outline, title: 'My Saved'),
     MenuItem(icon: Icons.message, title: 'Messages'),
     MenuItem(icon: Icons.history, title: 'Feedback History'),
@@ -175,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Send to backend
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/api/users/upload'),
+        Uri.parse('http://192.168.8.195:3000/api/users/upload'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": userEmail, "image": base64Image}),
       );
@@ -283,9 +286,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             builder: (context) => const ViewMessagesScreen(),
                           ),
                         );
-                      } else {
-                        // Handle other menu options
-                      }
+                      } else if (menuItems[index].title ==
+                          'Personal Information') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PersonalInfoScreen(),
+                          ),
+                        );
+                      } else {}
                     },
                   );
                 },

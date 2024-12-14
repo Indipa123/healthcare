@@ -33,6 +33,10 @@ dependencies:
   # HTTP requests for API integration
   http: ^1.2.2
 
+  google_maps_flutter: ^2.2.5
+
+  geocoding: ^2.1.0
+
   # To handle SVG files
   flutter_svg: ^2.0.4
 
@@ -69,7 +73,3 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/fonts/
-
-
-
-

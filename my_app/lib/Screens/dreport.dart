@@ -28,30 +28,28 @@ class _DReportsPageState extends State<DReportsPage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? doctorEmail = prefs.getString('doctorEmail');
 
-      if (doctorEmail != null) {
-        final response = await http.get(
-          Uri.parse(
-              'http://10.0.2.2:3000/api/auth/reports?doctor_email=$doctorEmail'),
-        );
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:3000/api/auth/reports?doctor_email=$doctorEmail'),
+      );
 
-        if (response.statusCode == 200) {
-          List<dynamic> fetchedReports = json.decode(response.body);
+      if (response.statusCode == 200) {
+        List<dynamic> fetchedReports = json.decode(response.body);
 
-          // Sort the reports by submission date in descending order
-          fetchedReports.sort((a, b) {
-            DateTime dateA = DateTime.parse(a['createdAt']);
-            DateTime dateB = DateTime.parse(b['createdAt']);
-            return dateB.compareTo(dateA); // Descending order
-          });
-          setState(() {
-            reports = fetchedReports;
-            isLoading = false;
-          });
-        } else {
-          throw Exception('Failed to load reports');
-        }
+        // Sort the reports by submission date in descending order
+        fetchedReports.sort((a, b) {
+          DateTime dateA = DateTime.parse(a['createdAt']);
+          DateTime dateB = DateTime.parse(b['createdAt']);
+          return dateB.compareTo(dateA); // Descending order
+        });
+        setState(() {
+          reports = fetchedReports;
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load reports');
       }
-    } catch (e) {
+        } catch (e) {
       setState(() {
         isLoading = false;
       });
