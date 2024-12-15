@@ -21,7 +21,12 @@ class MyApp extends StatelessWidget {
 }
 
 class DoctorListScreen extends StatefulWidget {
-  const DoctorListScreen({super.key});
+  final String? searchQuery;
+
+  const DoctorListScreen({
+    super.key,
+    this.searchQuery,
+  });
 
   @override
   _DoctorListScreenState createState() => _DoctorListScreenState();
@@ -45,6 +50,13 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
         final data = jsonDecode(response.body) as List;
         setState(() {
           doctors = List<Map<String, dynamic>>.from(data);
+          if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
+            doctors = doctors
+                .where((doctor) => doctor['name']
+                    .toLowerCase()
+                    .contains(widget.searchQuery!.toLowerCase()))
+                .toList();
+          }
           isLoading = false;
         });
       } else {
@@ -95,8 +107,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     return DoctorCard(
                       name: doctor['name'],
                       specialty: doctor['specialty'],
-                      email: doctor['email'] ??
-                          'noemail@example.com', // Pass the email here
+                      email: doctor['email'] ?? 'noemail@example.com',
                       rating: 4.7,
                       imageUrl: doctor['image'] != null
                           ? 'data:image/jpeg;base64,${doctor['image']}'
@@ -113,7 +124,7 @@ class DoctorCard extends StatelessWidget {
   final String specialty;
   final double rating;
   final String imageUrl;
-  final String email; // Add email
+  final String email;
 
   const DoctorCard({
     super.key,
@@ -121,7 +132,7 @@ class DoctorCard extends StatelessWidget {
     required this.specialty,
     required this.rating,
     required this.imageUrl,
-    required this.email, // Accept email
+    required this.email,
   });
 
   @override
@@ -135,7 +146,7 @@ class DoctorCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => DoctorDetailScreen(
               email: email,
-            ), // Pass email
+            ),
           ),
         );
       },

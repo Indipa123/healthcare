@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? userEmail;
   ImageProvider? profileImageProvider;
   int _selectedIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   // Load doctor name from shared preferences
   Future<void> _loadUserData() async {
@@ -93,6 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (context) => const SignInScreen()),
     );
+  }
+
+  void _search() {
+    final query = _searchController.text;
+    if (query.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DoctorListScreen(searchQuery: query),
+        ),
+      );
+    }
   }
 
   @override
@@ -171,9 +184,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                child: const TextField(
+                child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
-                    icon: Icon(Icons.search, color: Colors.grey),
+                    icon: IconButton(
+                      icon: const Icon(Icons.search, color: Colors.grey),
+                      onPressed: _search,
+                    ),
                     hintText: "Search doctor, drugs, articles...",
                     border: InputBorder.none,
                   ),

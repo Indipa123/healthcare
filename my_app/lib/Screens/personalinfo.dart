@@ -176,7 +176,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         onTap: onTap,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
         ),
       ),
     );
