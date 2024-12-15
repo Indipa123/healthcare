@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:my_app/Screens/articledetails.dart';
-import 'package:my_app/Screens/chooseplan.dart';
+import 'package:my_app/Screens/cart.dart';
+import 'package:my_app/Screens/pharmacyhome.dart';
 import 'package:my_app/Screens/profile.dart';
 import 'package:my_app/Screens/report.dart';
 import 'package:my_app/Screens/topdoctors.dart';
@@ -74,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ChoosePlanScreen()),
+          MaterialPageRoute(builder: (context) => CartPage()),
         );
         break;
       case 3:
@@ -217,7 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.local_pharmacy,
                     label: "Pharmacy",
                     onTap: () {
-                      // Add functionality to navigate to patients list
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PharmacyScreen()),
+                      );
                     },
                   ),
                   _buildActionButton(

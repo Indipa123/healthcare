@@ -490,6 +490,53 @@ router.post('/update', (req, res) => {
   });
 });
 
+// Route to fetch user details
+router.get('/admin/user-details', (req, res) => {
+  const { email } = req.query;
+
+  let query;
+  let queryParams = [];
+
+  if (email) {
+    query = `
+      SELECT u.name, u.email, u.image, 
+             pi.birthday, pi.contact, pi.address, pi.blood_type, pi.gender, pi.weight, pi.work, pi.height
+      FROM users u
+      LEFT JOIN personal_info pi ON u.email = pi.user_email
+      WHERE u.email = ?
+    `;
+    queryParams.push(email);
+  } else {
+    query = `
+      SELECT u.name, u.email, u.image, 
+             pi.birthday, pi.contact, pi.address, pi.blood_type, pi.gender, pi.weight, pi.work, pi.height
+      FROM users u
+      LEFT JOIN personal_info pi ON u.email = pi.user_email
+    `;
+  }
+
+  db.query(query, queryParams, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Convert image BLOB to base64 string
+    const users = results.map(user => {
+      if (user.image) {
+        user.image = Buffer.from(user.image).toString('base64');
+      }
+      return user;
+    });
+
+    res.status(200).json(users);
+  });
+});
+
+
 
 
 

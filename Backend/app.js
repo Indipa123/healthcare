@@ -2,13 +2,16 @@
 const express = require('express');
 const bcrypt = require('bcrypt'); // Add this line to import bcrypt
 const app = express();
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/auth');
 const planRoutes = require('./routes/planRoutes');
+const productRoutes = require('./routes/productRoutes');
 const db = require('./config/db');  // To initiate MySQL connection
 
 // Increase the payload limit for JSON data
+app.use(cors()); // Enable CORS for all routes
 app.use(bodyParser.json({ limit: '10mb' }));  // Adjust '10mb' as needed
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
@@ -19,6 +22,7 @@ app.use(express.json());
 app.use('/api/plan',planRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes );
+app.use('/api/products',productRoutes);
 
 
 // Start the server

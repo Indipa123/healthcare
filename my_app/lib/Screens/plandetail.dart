@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/topdoctors.dart';
 
 class PlanDetailsScreen extends StatefulWidget {
   final String planName;
@@ -368,7 +369,30 @@ class _PlanDetailsScreenState extends State<PlanDetailsScreen> {
       if (response.statusCode == 200) {
         // Successfully processed payment
         print('Payment successful!');
-        // Optionally navigate to a confirmation screen or show success message
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Payment Successful'),
+              content: const Text(
+                  'Your payment has been successful, Now you can submit your medical reports to the professional doctors'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Back to Top Doctors'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const DoctorListScreen()),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
       } else {
         print('Failed to process payment: ${response.statusCode}');
       }
