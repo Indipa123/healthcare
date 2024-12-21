@@ -6,13 +6,15 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: CartPage(),
     );
@@ -20,6 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class CartPage extends StatefulWidget {
+  const CartPage({super.key});
+
   @override
   _CartPageState createState() => _CartPageState();
 }
@@ -137,6 +141,13 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEAF4FF),
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // This removes the back arrow
+        title: const Align(
+          alignment: Alignment.centerLeft,
+          child: Text('My Cart'),
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -156,10 +167,13 @@ class _CartPageState extends State<CartPage> {
                 return Column(
                   children: [
                     const SizedBox(height: 22),
-                    CheckboxListTile(
-                      title: const Text('Select All'),
-                      value: items.every((item) => item.selected),
-                      onChanged: (value) => toggleAllSelection(items, value),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: CheckboxListTile(
+                        title: const Text('Select All'),
+                        value: items.every((item) => item.selected),
+                        onChanged: (value) => toggleAllSelection(items, value),
+                      ),
                     ),
                     Expanded(
                       child: ListView.builder(
@@ -168,9 +182,9 @@ class _CartPageState extends State<CartPage> {
                           final item = items[index];
                           return Card(
                             margin: const EdgeInsets.all(10),
-                            child: ListTile(
-                              leading: Row(
-                                mainAxisSize: MainAxisSize.min,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
                                 children: [
                                   Checkbox(
                                     value: item.selected,
@@ -188,26 +202,35 @@ class _CartPageState extends State<CartPage> {
                                           fit: BoxFit.cover,
                                         )
                                       : const Icon(Icons.image, size: 50),
-                                ],
-                              ),
-                              title: Text(
-                                item.name,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text('${item.ml}ml - Rs.${item.price}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    onPressed: () =>
-                                        updateQuantity(items, index, -1),
-                                    icon: const Icon(Icons.remove),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text('${item.ml}ml - Rs.${item.price}'),
+                                      ],
+                                    ),
                                   ),
-                                  Text('${item.quantity}'),
-                                  IconButton(
-                                    onPressed: () =>
-                                        updateQuantity(items, index, 1),
-                                    icon: const Icon(Icons.add),
+                                  Column(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () =>
+                                            updateQuantity(items, index, -1),
+                                        icon: const Icon(Icons.remove),
+                                      ),
+                                      Text('${item.quantity}'),
+                                      IconButton(
+                                        onPressed: () =>
+                                            updateQuantity(items, index, 1),
+                                        icon: const Icon(Icons.add),
+                                      ),
+                                    ],
                                   ),
                                   IconButton(
                                     onPressed: () => removeCartItem(item.id),
@@ -244,9 +267,9 @@ class _CartPageState extends State<CartPage> {
                           // Implement your action
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: Colors.blue,
                         ),
-                        child: const Text('Proceed',
+                        child: const Text('Check Out',
                             style: TextStyle(color: Colors.white)),
                       ),
                     ],
@@ -255,6 +278,23 @@ class _CartPageState extends State<CartPage> {
               }
               return const SizedBox.shrink();
             },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                // Implement your action for the new button
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8), // Less rounded corners
+                ),
+              ),
+              child: const Text('Move to Prescription order status',
+                  style: TextStyle(color: Colors.white)),
+            ),
           ),
         ],
       ),

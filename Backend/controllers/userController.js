@@ -28,7 +28,6 @@ exports.getAllUsers = (req, res) => {
     });
 };
 
-// Create a new user
 exports.createUser = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -36,9 +35,19 @@ exports.createUser = async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Start a transaction
+    await db.promise().beginTransaction();
+
     // Insert the new user into the database
-    const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
-    const [results] = await db.promise().query(query, [name, email, hashedPassword]);
+    const userQuery = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+    const [userResults] = await db.promise().query(userQuery, [name, email, hashedPassword]);
+
+    // Insert the email into the personal_info table
+    const personalInfoQuery = 'INSERT INTO personal_info (user_email) VALUES (?)';
+    await db.promise().query(personalInfoQuery, [email]);
+
+    // Commit the transaction
+    await db.promise().commit();
 
     // Send the welcome email
     const mailOptions = {
@@ -51,9 +60,13 @@ exports.createUser = async (req, res) => {
     // Send the email using Nodemailer
     await transporter.sendMail(mailOptions);
 
-    res.status(201).json({ message: 'User created successfully and email sent!', userId: results.insertId });
+    res.status(201).json({ message: 'User created successfully and email sent!', userId: userResults.insertId });
   } catch (error) {
     console.log('Error during user creation or email sending:', error);
+
+    // Rollback the transaction in case of error
+    await db.promise().rollback();
+
     res.status(500).json({ error: 'Error creating user or sending email' });
   }
 };

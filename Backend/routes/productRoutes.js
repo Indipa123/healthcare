@@ -127,21 +127,47 @@ router.get('/onsale', (req, res) => {
 });
 
 router.post('/cart/add', (req, res) => {
-    const { userEmail, productName, productSize, productPrice, productImage } = req.body;
+    const { userEmail, productName, productSize, productPrice, productImage, quantity } = req.body;
 
     // Decode base64 to binary
     const base64Data = productImage.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    const sql = 'INSERT INTO cart (user_email, product_name, product_size, product_price, product_image) VALUES (?, ?, ?, ?, ?)';
-    const params = [userEmail, productName, productSize, productPrice, imageBuffer];
+    // Check if the item already exists in the cart
+    const checkSql = 'SELECT * FROM cart WHERE user_email = ? AND product_name = ? AND product_size = ?';
+    const checkParams = [userEmail, productName, productSize];
 
-    db.query(sql, params, (err, result) => {
-        if (err) {
-            console.error('Error adding to cart:', err);
+    db.query(checkSql, checkParams, (checkErr, checkResult) => {
+        if (checkErr) {
+            console.error('Error checking cart:', checkErr);
             return res.status(500).send('Server error');
         }
-        res.status(201).json(result);
+
+        if (checkResult.length > 0) {
+            // Item exists, update the quantity
+            const updateSql = 'UPDATE cart SET quantity = quantity + ? WHERE user_email = ? AND product_name = ? AND product_size = ?';
+            const updateParams = [quantity, userEmail, productName, productSize];
+
+            db.query(updateSql, updateParams, (updateErr, updateResult) => {
+                if (updateErr) {
+                    console.error('Error updating cart:', updateErr);
+                    return res.status(500).send('Server error');
+                }
+                res.status(201).json(updateResult);
+            });
+        } else {
+            // Item does not exist, insert a new record
+            const insertSql = 'INSERT INTO cart (user_email, product_name, product_size, product_price, product_image, quantity) VALUES (?, ?, ?, ?, ?, ?)';
+            const insertParams = [userEmail, productName, productSize, productPrice, imageBuffer, quantity];
+
+            db.query(insertSql, insertParams, (insertErr, insertResult) => {
+                if (insertErr) {
+                    console.error('Error adding to cart:', insertErr);
+                    return res.status(500).send('Server error');
+                }
+                res.status(201).json(insertResult);
+            });
+        }
     });
 });
 

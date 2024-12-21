@@ -37,15 +37,44 @@ app.post('/api/users', (req, res) => {
 
   // Hash the password before storing
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+  const userQuery = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+  const personalInfoQuery = 'INSERT INTO personal_info (user_email) VALUES (?)';
 
-  db.query(query, [name, email, hashedPassword], (err, results) => {
+  // Start a transaction
+  db.beginTransaction((err) => {
     if (err) {
       return res.status(500).json({ error: 'Database error' });
     }
-    res.status(201).json({ message: 'User created successfully' });
+
+    db.query(userQuery, [name, email, hashedPassword], (err, userResults) => {
+      if (err) {
+        return db.rollback(() => {
+          res.status(500).json({ error: 'Database error' });
+        });
+      }
+
+      db.query(personalInfoQuery, [email], (err, personalInfoResults) => {
+        if (err) {
+          return db.rollback(() => {
+            res.status(500).json({ error: 'Database error' });
+          });
+        }
+
+        // Commit the transaction
+        db.commit((err) => {
+          if (err) {
+            return db.rollback(() => {
+              res.status(500).json({ error: 'Database error' });
+            });
+          }
+
+          res.status(201).json({ message: 'User created successfully' });
+        });
+      });
+    });
   });
 });
+
 
 // Login route
 app.post('/api/login', (req, res) => {

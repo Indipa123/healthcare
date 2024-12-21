@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/home.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'all_products_screen.dart'; // Import the new screen
@@ -13,9 +14,9 @@ class PharmacyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const PharmacyScreen(),
+      home: PharmacyScreen(),
     );
   }
 }
@@ -67,13 +68,25 @@ class _PharmacyScreenState extends State<PharmacyScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          "Pharmacy",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const BackButton(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          },
+        ),
+        title: const Center(
+          child: Text(
+            "Pharmacy",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -254,12 +267,15 @@ class Product {
   final String size;
   final String price;
   final String? image;
+  final bool requiresPrescription;
 
-  Product(
-      {required this.name,
-      required this.size,
-      required this.price,
-      this.image});
+  Product({
+    required this.name,
+    required this.size,
+    required this.price,
+    this.image,
+    required this.requiresPrescription,
+  });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -267,15 +283,34 @@ class Product {
       size: json['size'] ?? '',
       price: json['price']?.toString() ?? '0',
       image: json['image'],
+      requiresPrescription: json['prescription'] == 'need' ? true : false,
     );
   }
 }
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final Product product;
   const ProductCard({super.key, required this.product});
 
-  Future<void> addToCart(Product product) async {
+  @override
+  _ProductCardState createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  void showPrescriptionMessage(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('You need a prescription to purchase this.'),
+      ),
+    );
+  }
+
+  Future<void> addToCart(Product product, BuildContext context) async {
+    if (product.requiresPrescription) {
+      showPrescriptionMessage(context);
+      return;
+    }
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userEmail = prefs.getString('userEmail');
 
@@ -293,13 +328,24 @@ class ProductCard extends StatelessWidget {
         'productSize': product.size,
         'productPrice': product.price,
         'productImage': product.image,
+        'quantity': 1, // Always add one item at a time
       }),
     );
 
     if (response.statusCode == 201) {
       // Handle successful addition to cart
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item Added to cart'),
+        ),
+      );
     } else {
       // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to add item to cart'),
+        ),
+      );
     }
   }
 
@@ -320,25 +366,25 @@ class ProductCard extends StatelessWidget {
             height: 70,
             color: Colors.grey.shade100,
             child: Center(
-              child: product.image != null
-                  ? Image.memory(base64Decode(product.image!),
+              child: widget.product.image != null
+                  ? Image.memory(base64Decode(widget.product.image!),
                       fit: BoxFit.cover)
                   : Icon(Icons.image, size: 40, color: Colors.grey.shade400),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            product.name,
+            widget.product.name,
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
           ),
           Text(
-            product.size,
+            widget.product.size,
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 4),
           Text(
-            "Rs.${product.price}",
+            "Rs.${widget.product.price}",
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
           ),
@@ -346,7 +392,7 @@ class ProductCard extends StatelessWidget {
           Align(
             alignment: Alignment.bottomRight,
             child: GestureDetector(
-              onTap: () => addToCart(product),
+              onTap: () => addToCart(widget.product, context),
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -355,7 +401,7 @@ class ProductCard extends StatelessWidget {
                 child: const Icon(Icons.add, color: Colors.white),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
