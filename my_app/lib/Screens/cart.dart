@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/Screens/home.dart';
 import 'package:my_app/Screens/profile.dart';
 import 'package:my_app/Screens/report.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:my_app/Screens/checkout.dart'
+    as checkout; // Add this import with alias
+import 'package:my_app/Models/cart_item.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,7 +33,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
   late Future<List<CartItem>> cartItems;
 
   @override
@@ -121,7 +125,8 @@ class _CartPageState extends State<CartPage> {
 
     switch (_selectedIndex) {
       case 0:
-        // Stay on Home
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()));
         break;
       case 1:
         Navigator.pushReplacement(context,
@@ -135,6 +140,18 @@ class _CartPageState extends State<CartPage> {
             MaterialPageRoute(builder: (context) => const ProfileScreen()));
         break;
     }
+  }
+
+  void _navigateToCheckout(
+      BuildContext context, double subtotal, List<CartItem> items) {
+    final selectedItems = items.where((item) => item.selected).toList();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            checkout.CheckoutScreen(subtotal: subtotal, items: selectedItems),
+      ),
+    );
   }
 
   @override
@@ -252,7 +269,8 @@ class _CartPageState extends State<CartPage> {
             future: cartItems,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                final subtotal = calculateSubtotal(snapshot.data!);
+                final items = snapshot.data!;
+                final subtotal = calculateSubtotal(items);
                 return Container(
                   padding: const EdgeInsets.all(16),
                   color: const Color(0xFFEAF4FF),
@@ -263,9 +281,8 @@ class _CartPageState extends State<CartPage> {
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16)),
                       ElevatedButton(
-                        onPressed: () {
-                          // Implement your action
-                        },
+                        onPressed: () =>
+                            _navigateToCheckout(context, subtotal, items),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                         ),
@@ -316,7 +333,7 @@ class _CartPageState extends State<CartPage> {
   }
 }
 
-class CartItem {
+/*class CartItem {
   String id;
   String name;
   int quantity;
@@ -367,4 +384,4 @@ class CartItem {
     }
     throw Exception('Invalid size format');
   }
-}
+}*/
