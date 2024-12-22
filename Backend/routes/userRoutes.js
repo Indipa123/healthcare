@@ -536,6 +536,34 @@ router.get('/admin/user-details', (req, res) => {
   });
 });
 
+// Route to fetch user name and contact details
+router.get('/user-contact', (req, res) => {
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const query = `
+    SELECT u.name, pi.Contact, pi.Address
+    FROM users u
+    JOIN personal_info pi ON u.email = pi.user_email
+    WHERE u.email = ?
+  `;
+
+  db.query(query, [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(results[0]);
+  });
+});
+
 
 
 
