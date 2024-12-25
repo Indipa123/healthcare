@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/Models/cart_item.dart';
 import 'package:my_app/Screens/cart.dart';
+import 'package:my_app/Screens/orderscreen.dart';
 import 'package:my_app/Screens/personalinfo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -81,6 +82,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       }
     }
+  }
+
+  Future<void> _createOrder() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userEmail = prefs.getString('userEmail');
+
+    if (userEmail == null) return;
+
+    // Format items as a single string
+    String formattedItems = widget.items
+        .map((item) => '${item.name} * ${item.quantity}')
+        .join(', ');
+
+    final orderDetails = {
+      'user_email': userEmail,
+      'total': widget.subtotal,
+      'payment_method': _selectedPaymentMethod,
+      'items': formattedItems,
+    };
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:3000/api/orders/orders/create'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(orderDetails),
+    );
+
+    if (response.statusCode == 201) {
+      // Order created successfully
+      print("Order created successfully.");
+      _showOrderSuccessDialog();
+    } else {
+      print("Failed to create order.");
+    }
+  }
+
+  void _showOrderSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Order placed successfully"),
+          content: const Text(
+              "Your order placed successfully and you can see the status from your profile View orders Section"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("View Orders"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Navigate to the orders screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const OrdersScreen(), // Replace with your OrdersScreen
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -244,7 +307,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               leading: const Icon(Icons.money, color: Colors.green),
               title: const Text('Cash On Delivery'),
               trailing: Radio(
-                value: 'cod',
+                value: 'cash on delivery',
                 groupValue: _selectedPaymentMethod,
                 onChanged: (value) {
                   setState(() {
@@ -347,9 +410,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onPressed: () {
                     if (_selectedPaymentMethod == 'card' &&
                         _formKey.currentState!.validate()) {
-                      // Implement your payment action
-                    } else if (_selectedPaymentMethod == 'cod') {
-                      // Implement your payment action for Cash On Delivery
+                      _createOrder();
+                    } else if (_selectedPaymentMethod == 'cash on delivery') {
+                      _createOrder();
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -8,6 +8,7 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/auth');
 const planRoutes = require('./routes/planRoutes');
 const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 const db = require('./config/db');  // To initiate MySQL connection
 
 // Increase the payload limit for JSON data
@@ -23,6 +24,7 @@ app.use('/api/plan',planRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes );
 app.use('/api/products',productRoutes);
+app.use('/api/orders',orderRoutes);
 
 
 // Start the server
