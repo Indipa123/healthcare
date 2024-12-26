@@ -255,6 +255,32 @@ router.get('/reports/latest', (req, res) => {
   });
 });
 
+// Route to fetch reports with status "View Report Feedback"
+router.get('/reports/feedback', (req, res) => {
+  const { user_email } = req.query;
+
+  if (!user_email) {
+    return res.status(400).json({ error: 'User email is required' });
+  }
+
+  const query = `
+    SELECT id, report_type, status, DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
+    FROM medical_reports
+    WHERE user_email = ? AND status = 'View Report Feedback'
+    ORDER BY created_at DESC
+  `;
+
+  db.query(query, [user_email], (err, results) => {
+    if (err) {
+      console.error('Error fetching reports:', err);
+      return res.status(500).json({ error: 'Failed to fetch reports' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+
 // Fetch prescription details by prescription ID
 router.get('/prescriptions/:report_id', (req, res) => {
   const reportId = req.params.report_id;

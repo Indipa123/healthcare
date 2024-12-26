@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:my_app/Screens/chooseplan.dart';
+import 'package:my_app/Screens/cart.dart';
+import 'package:my_app/Screens/feedbackhistory.dart';
 import 'package:my_app/Screens/home.dart';
+import 'package:my_app/Screens/orderscreen.dart';
 import 'package:my_app/Screens/personalinfo.dart';
 import 'package:my_app/Screens/report.dart';
 import 'package:my_app/Screens/signin.dart';
@@ -36,7 +38,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String? userName;
   String? userEmail;
-  int _selectedIndex = 0;
+  int _selectedIndex = 3;
   File? _profileImage;
   ImageProvider? profileImageProvider;
 
@@ -62,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ChoosePlanScreen()),
+          MaterialPageRoute(builder: (context) => const CartPage()),
         );
         break;
       case 3:
@@ -102,11 +104,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final List<MenuItem> menuItems = [
     MenuItem(icon: Icons.person, title: 'Personal Information'),
+    MenuItem(icon: Icons.shopping_bag, title: 'View Orders'),
     MenuItem(icon: Icons.favorite_outline, title: 'My Saved'),
     MenuItem(icon: Icons.message, title: 'Messages'),
     MenuItem(icon: Icons.history, title: 'Feedback History'),
     MenuItem(icon: Icons.payment, title: 'Payment Method'),
-    MenuItem(icon: Icons.question_answer, title: 'FAQs'),
     MenuItem(icon: Icons.contact_support, title: 'Contact Us'),
     MenuItem(icon: Icons.logout, title: 'Logout'),
   ];
@@ -293,7 +295,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             builder: (context) => const PersonalInfoScreen(),
                           ),
                         );
-                      } else {}
+                      } else if (menuItems[index].title == 'View Orders') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OrdersScreen(),
+                          ),
+                        );
+                      } else if (menuItems[index].title == 'Feedback History') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FeedbackHistoryScreen(),
+                          ),
+                        );
+                      }
                     },
                   );
                 },

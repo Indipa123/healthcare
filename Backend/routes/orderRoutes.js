@@ -1,11 +1,50 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const tesseract = require('tesseract.js');
+
+const checkPrescriptionImage = async (imageBuffer) => {
+    // Use Tesseract.js to recognize text in the image
+    const { data: { text } } = await tesseract.recognize(imageBuffer, 'eng');
+
+    // Return true if the image contains any text, otherwise return false
+    return text.trim().length > 0;
+};
+
+router.post('/pres/upload', async (req, res) => {
+    const { user_email, pres_image, notes, doctor_name } = req.body;
+    const date = new Date().toISOString().split('T')[0]; // Current date
+
+    if (!user_email || !pres_image) {
+        return res.status(400).json({ error: 'User email and prescription image are required' });
+    }
+
+    // Check if the prescription image is valid
+    const imageBuffer = Buffer.from(pres_image, 'base64');
+    const isValidImage = await checkPrescriptionImage(imageBuffer);
+    if (!isValidImage) {
+        return res.status(400).json({ error: 'Invalid prescription image' });
+    }
+
+    const query = `
+        INSERT INTO prescriptions (user_email, pres_image, date, notes, doctor_name)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [user_email, pres_image, date, notes, doctor_name], (err, result) => {
+        if (err) {
+            console.error('Error saving prescription:', err);
+            return res.status(500).json({ error: 'Failed to save prescription' });
+        }
+
+        res.status(201).json({ message: 'Prescription uploaded successfully' });
+    });
+});
 
 // Get all orders
 router.get('/orders', (req, res) => {
     const sql = `
-        SELECT o.id, o.user_email, o.total, o.order_status, o.payment_method, o.items, u.name
+        SELECT o.id, o.user_email, o.total, o.order_status, o.payment_method, o.items, DATE_FORMAT(o.createdAt, '%Y-%m-%d') as createdAt, u.name
         FROM orders o
         LEFT JOIN users u ON o.user_email = u.email
     `;

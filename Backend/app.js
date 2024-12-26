@@ -13,8 +13,8 @@ const db = require('./config/db');  // To initiate MySQL connection
 
 // Increase the payload limit for JSON data
 app.use(cors()); // Enable CORS for all routes
-app.use(bodyParser.json({ limit: '10mb' }));  // Adjust '10mb' as needed
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));  // Adjust '10mb' as needed
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Middleware to parse JSON bodies
 app.use(express.json());

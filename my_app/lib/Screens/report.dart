@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/cart.dart';
 import 'package:my_app/Screens/home.dart';
+import 'package:my_app/Screens/profile.dart';
 import 'package:my_app/Screens/ureportdetail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -172,10 +174,16 @@ class _ReportPageState extends State<ReportPage> {
       case 1:
         break; // Stay on Reports screen
       case 2:
-        // Navigate to Cart screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CartPage()),
+        );
         break;
       case 3:
-        // Navigate to Profile screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
         break;
     }
   }
