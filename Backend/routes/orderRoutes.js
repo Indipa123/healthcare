@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mysql = require('mysql2');
 const db = require('../config/db');
 const tesseract = require('tesseract.js');
 
@@ -31,7 +32,7 @@ router.post('/pres/upload', async (req, res) => {
         VALUES (?, ?, ?, ?, ?)
     `;
 
-    db.query(query, [user_email, pres_image, date, notes, doctor_name], (err, result) => {
+    db.query(query, [user_email, imageBuffer, date, notes, doctor_name], (err, result) => {
         if (err) {
             console.error('Error saving prescription:', err);
             return res.status(500).json({ error: 'Failed to save prescription' });
@@ -40,6 +41,9 @@ router.post('/pres/upload', async (req, res) => {
         res.status(201).json({ message: 'Prescription uploaded successfully' });
     });
 });
+
+
+
 
 // Get all orders
 router.get('/orders', (req, res) => {
@@ -111,4 +115,65 @@ router.put('/orders/:id', (req, res) => {
 });
 
 
+// Get all prescriptions
+router.get('/pres', (req, res) => {
+    const sql = `
+      SELECT p.id, p.user_email, p.pres_image, p.doctor_name, p.notes, DATE_FORMAT(p.date, '%Y-%m-%d') as date, p.pres_status, u.name
+      FROM prescriptions p
+      LEFT JOIN users u ON p.user_email = u.email
+    `;
+  
+    db.query(sql, (err, results) => {
+      if (err) {
+        console.error('Error fetching prescriptions:', err);
+        return res.status(500).json({ error: 'Error fetching prescriptions' });
+      }
+  
+      // Format results using Array.map()
+      const formattedResults = results.map(order => {
+        return {
+          ...order,
+          pres_image: Buffer.isBuffer(order.pres_image) ? order.pres_image.toString('base64') : null
+        };
+      });
+  
+      res.json(formattedResults);
+    });
+});
+
+// Edit prescription order
+router.put('/pres/:id', (req, res) => {
+    const { id } = req.params;
+    const { pres_status } = req.body;
+
+    if (!pres_status) {
+        return res.status(400).send('Prescription status is required');
+    }
+
+    const sql = 'UPDATE prescriptions SET pres_status = ? WHERE id = ?';
+    db.query(sql, [pres_status, id], (err, result) => {
+        if (err) {
+            console.error('Error updating prescription order:', err);
+            return res.status(500).send('Error updating prescription order');
+        }
+        res.status(200).send('Prescription order updated successfully');
+    });
+});
+
+// Delete prescription order
+router.delete('/pres/:id', (req, res) => {
+    const { id } = req.params;
+    const sql = 'DELETE FROM prescriptions WHERE id = ?';
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Error deleting prescription order:', err);
+            return res.status(500).send('Error deleting prescription order');
+        }
+        res.status(200).send('Prescription order deleted successfully');
+    });
+});
+
+
+
 module.exports = router;
+

@@ -306,7 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => FeedbackHistoryScreen(),
+                            builder: (context) => const FeedbackHistoryScreen(),
                           ),
                         );
                       }

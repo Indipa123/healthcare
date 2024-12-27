@@ -42,7 +42,7 @@ class _PharmacyScreenState extends State<PharmacyScreen> {
 
   Future<List<Product>> fetchPopularProducts() async {
     final response =
-        await http.get(Uri.parse('http://172.20.10.2:3000/api/products/popular'));
+        await http.get(Uri.parse('http://10.0.2.2:3000/api/products/popular'));
 
     if (response.statusCode == 200) {
       final List<dynamic> productJson = json.decode(response.body);
@@ -54,7 +54,7 @@ class _PharmacyScreenState extends State<PharmacyScreen> {
 
   Future<List<Product>> fetchOnSaleProducts() async {
     final response =
-        await http.get(Uri.parse('http://172.20.10.2:3000/api/products/onsale'));
+        await http.get(Uri.parse('http://10.0.2.2:3000/api/products/onsale'));
 
     if (response.statusCode == 200) {
       final List<dynamic> productJson = json.decode(response.body);
@@ -328,7 +328,7 @@ class _ProductCardState extends State<ProductCard> {
     }
 
     final response = await http.post(
-      Uri.parse('http://172.20.10.2:3000/api/products/cart/add'),
+      Uri.parse('http://10.0.2.2:3000/api/products/cart/add'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'userEmail': userEmail,

@@ -11,6 +11,8 @@ void main() {
 }
 
 class PrescriptionApp extends StatelessWidget {
+  const PrescriptionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,6 +23,8 @@ class PrescriptionApp extends StatelessWidget {
 }
 
 class UploadPrescriptionScreen extends StatefulWidget {
+  const UploadPrescriptionScreen({super.key});
+
   @override
   _UploadPrescriptionScreenState createState() =>
       _UploadPrescriptionScreenState();
@@ -77,7 +81,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     final base64Image = base64Encode(bytes);
 
     final response = await http.post(
-      Uri.parse('http://172.20.10.2:3000/api/orders/pres/upload'),
+      Uri.parse('http://10.0.2.2:3000/api/orders/pres/upload'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'user_email': userEmail,
@@ -105,10 +109,10 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Upload Prescription',
           style: TextStyle(color: Colors.black),
         ),
@@ -130,7 +134,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Upload Prescription',
                       style: TextStyle(color: Colors.white),
                     ),
@@ -143,14 +147,14 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Take a Photo',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _selectedFile != null
                   ? Container(
                       height: 200,
@@ -175,7 +179,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                         ),
                       ),
                     ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -189,7 +193,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Edit',
                       style: TextStyle(color: Colors.white),
                     ),
@@ -206,20 +210,20 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Remove',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 "Doctor's Name (Optional)",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
               TextField(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: "Enter doctor's name",
                   border: OutlineInputBorder(),
                 ),
@@ -227,14 +231,14 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                   doctorName = value;
                 },
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 "Add Notes",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
               TextField(
                 maxLines: 3,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: "Add notes",
                   border: OutlineInputBorder(),
                 ),
@@ -242,27 +246,27 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                   notes = value;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _uploadPrescription,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  minimumSize: Size(double.infinity, 48),
+                  minimumSize: const Size(double.infinity, 48),
                 ),
-                child: Text(
+                child: const Text(
                   'Submit Prescription',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
               if (isUploading) ...[
-                SizedBox(height: 16),
-                Text(
+                const SizedBox(height: 16),
+                const Text(
                   'Uploading...',
                   style: TextStyle(color: Colors.white),
                 ),
                 LinearProgressIndicator(
                   backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
                 ),
               ],
             ],
