@@ -3,11 +3,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:my_app/Screens/presorder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 void main() {
-  runApp(PrescriptionApp());
+  runApp(const PrescriptionApp());
 }
 
 class PrescriptionApp extends StatelessWidget {
@@ -15,7 +16,7 @@ class PrescriptionApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: UploadPrescriptionScreen(),
     );
@@ -92,7 +93,58 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     );
 
     if (response.statusCode == 201) {
-      print('Prescription uploaded successfully');
+      // Show success popup
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            contentPadding: const EdgeInsets.all(16.0),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.blue, size: 60),
+                const SizedBox(height: 16),
+                const Text(
+                  'Prescription Upload Successful',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You can view prescription order status through cart screen.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OrderStatusPage(),
+                      ),
+                    ); // Close dialog and navigate to OrderStatusPage
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text(
+                    'View Status',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
     } else {
       print('Failed to upload prescription');
     }

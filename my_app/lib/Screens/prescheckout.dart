@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/Models/cart_item.dart';
-import 'package:my_app/Screens/cart.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:my_app/Screens/orderscreen.dart';
 import 'package:my_app/Screens/personalinfo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 
-class CheckoutScreen extends StatefulWidget {
+class PresCheckoutScreen extends StatefulWidget {
   final double subtotal;
-  final List<CartItem> items;
+  final List<String> medications;
+  final int presId;
 
-  const CheckoutScreen(
-      {super.key, required this.subtotal, required this.items});
+  const PresCheckoutScreen(
+      {super.key,
+      required this.subtotal,
+      required this.medications,
+      required this.presId});
 
   @override
-  _CheckoutScreenState createState() => _CheckoutScreenState();
+  _PresCheckoutScreenState createState() => _PresCheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _PresCheckoutScreenState extends State<PresCheckoutScreen> {
   String? _selectedPaymentMethod;
   String? userName;
   String? userContact;
@@ -90,16 +92,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (userEmail == null) return;
 
-    // Format items as a single string
-    String formattedItems = widget.items
-        .map((item) => '${item.name} * ${item.quantity}')
-        .join(', ');
+    // Format medications as a single string
+    String formattedMedications = widget.medications.join(', ');
 
     final orderDetails = {
       'user_email': userEmail,
       'total': widget.subtotal,
       'payment_method': _selectedPaymentMethod,
-      'items': formattedItems,
+      'items': formattedMedications,
     };
 
     final response = await http.post(
@@ -158,12 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CartPage(),
-              ),
-            );
+            Navigator.pop(context);
           },
         ),
       ),
@@ -220,8 +215,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 10),
-                  ...widget.items
-                      .map((item) => Text('${item.name} x${item.quantity}')),
+                  ...widget.medications.map((medication) => Text(medication)),
                   const SizedBox(height: 10),
                   Text(
                     'Subtotal: Rs. ${widget.subtotal.toStringAsFixed(2)}',

@@ -173,7 +173,145 @@ router.delete('/pres/:id', (req, res) => {
     });
 });
 
+// Create a new order and update the prescription order
+// Create a new order and update the prescription order
+router.post('/presorders/create', (req, res) => {
+    const { pres_id, user_email, medications, total } = req.body;
 
+    if (!pres_id || !user_email || !medications || !total) {
+        return res.status(400).send('All fields are required');
+    }
+
+    const createOrderSql = 'INSERT INTO presorders (pres_id, user_email, medications, total) VALUES (?, ?, ?, ?)';
+    const updatePrescriptionSql = 'UPDATE prescriptions SET pres_status = "processed" WHERE id = ?';
+
+    db.query(createOrderSql, [pres_id, user_email, medications, total], (err, result) => {
+        if (err) {
+            console.error('Error creating order:', err);
+            return res.status(500).send('Error creating order');
+        }
+
+        db.query(updatePrescriptionSql, [pres_id], (err, result) => {
+            if (err) {
+                console.error('Error updating prescription order:', err);
+                return res.status(500).send('Error updating prescription order');
+            }
+
+            res.status(201).send('Order created and prescription order updated successfully');
+        });
+    });
+});
+
+router.get('/pres/orders', (req, res) => {
+    const { user_email } = req.query;
+
+    if (!user_email) {
+        return res.status(400).json({ error: 'User email is required' });
+    }
+
+    const query = `
+        SELECT id, DATE_FORMAT(date, '%d-%m-%Y') as date, pres_status
+        FROM prescriptions
+        WHERE user_email = ?
+        ORDER BY date DESC
+    `;
+
+    db.query(query, [user_email], (err, results) => {
+        if (err) {
+            console.error('Error fetching orders:', err);
+            return res.status(500).json({ error: 'Failed to fetch orders' });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
+router.get('/pres/order-details', (req, res) => {
+    const { user_email, pres_id } = req.query;
+
+    if (!user_email || !pres_id) {
+        return res.status(400).json({ error: 'User email and prescription ID are required' });
+    }
+
+    const query = `
+        SELECT medications, total
+        FROM presorders
+        WHERE user_email = ? AND pres_id = ?
+    `;
+
+    db.query(query, [user_email, pres_id], (err, results) => {
+        if (err) {
+            console.error('Error fetching order details:', err);
+            return res.status(500).json({ error: 'Failed to fetch order details' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        res.status(200).json(results[0]);
+    });
+});
+
+
+// Route to delete a prescription
+/*router.delete('/pres/:presId', (req, res) => {
+    const { presId } = req.params;
+    const { user_email } = req.query;
+  
+    const presIdNumeric = parseInt(presId, 10);
+    if (isNaN(presIdNumeric)) {
+      return res.status(400).json({ error: 'Invalid prescription ID' });
+    }
+  
+    if (!user_email) {
+      return res.status(400).json({ error: 'User email is required' });
+    }
+  
+    db.getConnection((err, connection) => {
+      if (err) {
+        console.error('Error getting database connection:', err);
+        return res.status(500).json({ error: 'Database connection failed' });
+      }
+  
+      connection.beginTransaction((err) => {
+        if (err) {
+          connection.release();
+          console.error('Error starting transaction:', err);
+          return res.status(500).json({ error: 'Failed to start transaction' });
+        }
+  
+        const deletePresOrdersQuery = 'DELETE FROM presorders WHERE user_email = ? AND pres_id = ?';
+  
+        connection.query(deletePresOrdersQuery, [user_email, presIdNumeric], (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error('Error deleting from presorders:', err);
+              res.status(500).json({ error: 'Failed to delete from presorders' });
+            });
+          }
+  
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                connection.release();
+                console.error('Error committing transaction:', err);
+                res.status(500).json({ error: 'Failed to commit transaction' });
+              });
+            }
+  
+            connection.release();
+            res.status(200).json({ message: 'Prescription order deleted successfully' });
+          });
+        });
+      });
+    });
+  });*/
+  
+  
+
+  
+  
 
 module.exports = router;
-

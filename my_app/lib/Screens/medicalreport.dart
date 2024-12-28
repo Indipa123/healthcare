@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:my_app/Screens/report.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,7 +31,7 @@ class SubmitReportPage extends StatefulWidget {
 }
 
 class _SubmitReportPageState extends State<SubmitReportPage> {
-  File? _selectedImage;
+  File? _selectedFile;
   final ImagePicker _picker = ImagePicker();
   String? _selectedReportType;
   String? userEmail; // To store the user email
@@ -52,16 +53,20 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedFile = File(pickedFile.path);
       });
     }
   }
 
   Future<void> _importFile() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+
+    if (result != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedFile = File(result.files.single.path!);
       });
     }
   }
@@ -74,7 +79,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
       return;
     }
 
-    if (_selectedImage == null || _selectedReportType == null) {
+    if (_selectedFile == null || _selectedReportType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a file and report type.')),
       );
@@ -82,8 +87,8 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
     }
 
     try {
-      // Convert image to base64
-      final bytes = await _selectedImage!.readAsBytes();
+      // Convert file to base64
+      final bytes = await _selectedFile!.readAsBytes();
       final base64FileData = base64Encode(bytes);
 
       // Prepare request payload
@@ -92,6 +97,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
         'doctor_email': widget.doctorEmail,
         'report_type': _selectedReportType,
         'file_data': base64FileData,
+        'file_name': _selectedFile!.path.split('/').last,
       });
 
       // Send POST request
@@ -104,7 +110,7 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
-        // Show success popup
+        // Show success popup 
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -254,14 +260,16 @@ class _SubmitReportPageState extends State<SubmitReportPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              if (_selectedImage != null)
+              if (_selectedFile != null)
                 Container(
                   height: 200,
                   width: 200,
                   decoration: BoxDecoration(
                     border: Border.all(),
                   ),
-                  child: Image.file(_selectedImage!),
+                  child: _selectedFile!.path.endsWith('.pdf')
+                      ? Center(child: Text('PDF File: ${_selectedFile!.path.split('/').last}'))
+                      : Image.file(_selectedFile!),
                 ),
               const SizedBox(height: 16),
               ElevatedButton(

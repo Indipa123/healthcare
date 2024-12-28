@@ -143,7 +143,7 @@ class _PharmacyScreenState extends State<PharmacyScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      UploadPrescriptionScreen()),
+                                      const UploadPrescriptionScreen()),
                             );
                           },
                           child: const Text(
